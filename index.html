@@ -347,7 +347,7 @@
         .cursor { display: inline-block; width: 8px; height: 16px; background: #22c55e; animation: blink 1s infinite; vertical-align: middle; }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* MAGICAL SPARKLE ANIMATIONS FOR RESUME */
+        /* MAGICAL SPARKLE ANIMATIONS FOR  */
         .resume-magic-container {
             position: relative;
             overflow: visible;
@@ -844,7 +844,7 @@
                 <div class="flex items-center justify-between gap-4 mb-4">
                     <h2 class="text-2xl font-bold text-white">Resume</h2>
                     <div class="flex items-center gap-3">
-                        <a href="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" target="_blank" class="text-sm text-gray-300 hover:text-white underline">Open in new tab</a>
+                        <a href="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh-CV-latest.pdf" target="_blank" class="text-sm text-gray-300 hover:text-white underline">Open in new tab</a>
                         <button type="button" onclick="downloadResumePdf()" class="text-sm text-gray-300 hover:text-white underline">Download PDF</button>
                     </div>
                 </div>
@@ -860,7 +860,7 @@
         };
 
         async function downloadResumePdf() {
-            const url = 'https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf';
+            const url = 'https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh-CV-latest.pdf';
             try {
                 const res = await fetch(url, { cache: 'no-cache' });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -869,7 +869,7 @@
                 const blobUrl = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = blobUrl;
-                a.download = 'rajesh resume 2.pdf';
+                a.download = 'rajesh-CV-latest.pdf';
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
