@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajesh Choudhury | OS Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
+
+        :root {
+            --glass-bg: rgba(20, 20, 25, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #8b5cf6;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.3) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.3) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.3) 0px, transparent 50%);
+            background-size: cover;
+            user-select: none; /* Prevent text selection while dragging */
+        }
+
+        /* BOOT SCREEN */
+        #boot-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            color: #0f0;
+            font-family: 'JetBrains Mono', monospace;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 2rem;
+            animation: slideUp 0.8s ease-in-out 3s forwards;
+        }
+
+        @keyframes slideUp {
+            to { transform: translateY(-100%); opacity: 0; visibility: hidden; }
+        }
+
+        /* WINDOW STYLES */
+        .window-frame {
+            position: absolute;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s, opacity 0.2s, width 0.3s, height 0.3s;
+            overflow: hidden;
+            min-width: 300px;
+            min-height: 200px;
+            opacity: 0; 
+            visibility: hidden;
+            transform: translate(-50%, -50%) scale(0.95);
+            pointer-events: none; /* Disabled when hidden */
+        }
+
+        .window-frame.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: all;
+        }
+
+        .title-bar {
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            cursor: grab;
+            position: relative;
+            gap: 16px;
+        }
+
+        .title-bar-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .title-bar:active { cursor: grabbing; }
+
+        .traffic-lights { display: flex; gap: 8px; }
+        .light { width: 12px; height: 12px; border-radius: 50%; }
+        .close-btn { background: #ff5f56; cursor: pointer; }
+        .min-btn { background: #ffbd2e; cursor: pointer; }
+        .max-btn { background: #27c93f; }
+
+        .window-content {
+            flex: 1;
+            overflow-y: auto;
+            color: #e2e8f0;
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .window-frame {
+                min-width: 280px;
+                min-height: 180px;
+                border-radius: 8px;
+            }
+
+            .title-bar {
+                height: 35px;
+                padding: 0 12px;
+                font-size: 0.85rem;
+                justify-content: center;
+            }
+
+            #sidebar-toggle {
+                position: absolute !important;
+                right: 12px !important;
+                margin-right: 0 !important;
+            }
+
+            .traffic-lights { gap: 6px; }
+            .light { width: 10px; height: 10px; }
+
+            #win-profile {
+                width: 95% !important;
+                height: 85% !important;
+            }
+
+            #win-terminal {
+                width: 95% !important;
+                height: 60% !important;
+            }
+
+            .window-content {
+                padding: 1rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #boot-screen {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+
+            .window-frame {
+                min-width: 260px;
+                border-radius: 6px;
+            }
+
+            .title-bar {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 0.75rem;
+            }
+
+            .light { width: 9px; height: 9px; }
+
+            #win-profile {
+                width: 98% !important;
+                height: 90% !important;
+            }
+
+            #win-terminal {
+                width: 98% !important;
+                height: 70% !important;
+            }
+
+            .window-content p {
+                font-size: 0.875rem;
+            }
+
+            .window-content h1,
+            .window-content h2,
+            .window-content h3 {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        /* DOCK */
+        .dock-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        
+        .dock {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 24px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dock-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .dock-icon:hover { transform: translateY(-10px) scale(1.1); }
+        .dock-icon i { pointer-events: none; } /* Allow clicks to pass through icons */
+        .dock-icon::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+        }
+        .dock-icon.running::after { opacity: 1; }
+
+        /* MOBILE DOCK RESPONSIVE */
+        @media (max-width: 768px) {
+            .dock-container {
+                bottom: 15px;
+            }
+
+            .dock {
+                padding: 10px;
+                gap: 15px;
+                border-radius: 18px;
+            }
+
+            .dock-icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 10px;
+                font-size: 20px;
+            }
+
+            .dock-icon::after {
+                bottom: -6px;
+                width: 3px;
+                height: 3px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dock-container {
+                bottom: 10px;
+                width: 98%;
+            }
+
+            .dock {
+                width: 100%;
+                padding: 8px;
+                gap: 10px;
+                border-radius: 14px;
+                justify-content: space-around;
+            }
+
+            .dock-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                font-size: 18px;
+            }
+
+            .dock-icon::after {
+                bottom: -5px;
+                width: 3px;
+                height: 3px;
+            }
+
+            .dock-icon:hover {
+                transform: translateY(-5px) scale(1.08);
+            }
+        }
+
+        /* HAMBURGER MENU & SIDEBAR MOBILE */
+        @media (max-width: 768px) {
+            #sidebar-toggle {
+                display: flex !important;
+            }
+
+            #sidebar {
+                transition: all 0.3s ease-in-out;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            }
+
+            #sidebar.open {
+                display: block !important;
+                animation: slideInSidebar 0.3s ease-in-out;
+            }
+
+            #sidebar:not(.open) {
+                display: none !important;
+                animation: slideOutSidebar 0.3s ease-in-out;
+            }
+
+            @keyframes slideInSidebar {
+                from {
+                    opacity: 0;
+                    transform: translateX(-100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes slideOutSidebar {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-100%);
+                }
+            }
+        }
+
+        /* CLI TYPING */
+        .cursor { display: inline-block; width: 8px; height: 16px; background: #22c55e; animation: blink 1s infinite; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* MAGICAL SPARKLE ANIMATIONS FOR RESUME */
+        .resume-magic-container {
+            position: relative;
+            overflow: visible;
+        }
+
+        .resume-magic-container::before,
+        .resume-magic-container::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 16px;
+            background: linear-gradient(90deg, 
+                #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b);
+            background-size: 400% 100%;
+            animation: borderGlow 3s linear infinite, sparkleRotate 6s linear infinite;
+            z-index: -1;
+            opacity: 0.8;
+            filter: blur(8px);
+        }
+
+        .resume-magic-container::after {
+            filter: blur(20px);
+            opacity: 0.4;
+            animation: borderGlow 3s linear infinite reverse, sparkleRotate 8s linear infinite reverse;
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 400% 50%; }
+        }
+
+        @keyframes sparkleRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Sparkle particles */
+        .sparkle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #fff 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkleFloat 2s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .sparkle::before {
+            content: '✦';
+            position: absolute;
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+            animation: sparkleGlow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes sparkleFloat {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 1; }
+            50% { transform: translateY(-15px) scale(1.2); opacity: 0.6; }
+        }
+
+        @keyframes sparkleGlow {
+            0% { opacity: 0.5; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Corner sparkles */
+        .corner-sparkle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .corner-sparkle::before,
+        .corner-sparkle::after {
+            content: '✨';
+            position: absolute;
+            font-size: 16px;
+            animation: cornerPulse 1.5s ease-in-out infinite;
+        }
+
+        .corner-sparkle::after {
+            font-size: 12px;
+            animation-delay: 0.5s;
+            left: 8px;
+            top: 8px;
+        }
+
+        @keyframes cornerPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.3) rotate(180deg); }
+        }
+
+        .corner-tl { top: -15px; left: -15px; }
+        .corner-tr { top: -15px; right: -15px; }
+        .corner-bl { bottom: -15px; left: -15px; }
+        .corner-br { bottom: -15px; right: -15px; }
+
+        /* Edge particles */
+        .edge-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px 2px rgba(255,255,255,0.8), 0 0 12px 4px rgba(139,92,246,0.6);
+            animation: edgeTravel 4s linear infinite;
+            z-index: 15;
+        }
+
+        .edge-top { top: -2px; animation-name: edgeTravelHorizontal; }
+        .edge-bottom { bottom: -2px; animation-name: edgeTravelHorizontal; animation-direction: reverse; }
+        .edge-left { left: -2px; animation-name: edgeTravelVertical; }
+        .edge-right { right: -2px; animation-name: edgeTravelVertical; animation-direction: reverse; }
+
+        @keyframes edgeTravelHorizontal {
+            0% { left: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        @keyframes edgeTravelVertical {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Burst particles */
+        @keyframes particleBurst {
+            0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(360deg); }
+        }
+
+        .burst-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        .burst-particle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #ff6b6b, #feca57, #48dbfb);
+            border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+            animation: particleBurst 1.2s ease-out forwards;
+        }
+
+        /* Swirl animation */
+        @keyframes swirl {
+            0% { transform: rotate(0deg) translateX(0); opacity: 1; }
+            100% { transform: rotate(720deg) translateX(30px); opacity: 0; }
+        }
+
+        .swirl-particle {
+            position: absolute;
+            font-size: 20px;
+            animation: swirl 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Firework burst on appear */
+        .firework-burst {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 25;
+            animation: burstFade 2s ease-out forwards;
+        }
+
+        .firework-burst span {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: fireworkExplode 1.5s ease-out forwards;
+        }
+
+        @keyframes fireworkExplode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: var(--explode-dir) scale(0); opacity: 0; }
+        }
+
+        @keyframes burstFade {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <div>> BOOTING RAJESH_OS KERNEL...</div>
+        <div>> LOADING MODULES: [AI, RAG, ASP.NET, PYTHON, FLUTTER]</div>
+        <div>> MOUNTING EXPERIENCE: ABI HEALTH... OK</div>
+        <div>> MOUNTING EXPERIENCE: DIT TRIPURA... OK</div>
+        <div>> CHECKING CERTIFICATES: GOOGLE_CERTIFIED... FOUND</div>
+        <div>> INITIALIZING GUI...</div>
+        <div style="margin-top: 20px; color: #fff;">[ OK ] SYSTEM READY. WELCOME, RECRUITER.</div>
+    </div>
+
+    <main class="w-screen h-screen relative overflow-hidden">
+        
+        <div id="win-profile" class="window-frame w-[90%] md:w-[900px] h-[80%] md:h-[600px]" style="top: 50%; left: 50%; z-index: 10;">
+            <div class="title-bar" onmousedown="dragStart(event, 'win-profile')">
+                <div class="traffic-lights">
+                    <div class="light close-btn" onclick="closeWindow('win-profile')"></div>
+                    <div class="light min-btn"></div>
+                    <div class="light max-btn"></div>
+                </div>
+                <div class="title-bar-center text-sm font-semibold text-gray-300 flex items-center gap-2">
+                    <i class="fas fa-user-astronaut"></i> Portfolio_Viewer.app
+                </div>
+                <button id="sidebar-toggle" class="hidden md:hidden w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white transition">
+                    <i class="fas fa-bars text-lg" onclick="toggleSidebar()"></i>
+                </button>
+            </div>
+            
+            <div class="window-content bg-gray-900/50 flex flex-col md:flex-row">
+                <div id="sidebar" class="sidebar-mobile w-full md:w-64 bg-gray-900/95 md:bg-black/20 p-6 border-r border-white/5 md:pb-6 pb-4 md:block hidden absolute md:static top-[40px] left-0 right-0 z-50 md:z-auto">
+                    <button onclick="toggleSidebar()" class="md:hidden float-right text-gray-400 hover:text-white mb-4">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                    <div class="text-center mb-4 md:mb-6 clear-both">
+                        <img src="https://media.licdn.com/dms/image/v2/D4E03AQFc_Dj-FykgEQ/profile-displayphoto-shrink_800_800/B4EZp2.jYOKYAc-/0/1762932701236?e=1767225600&v=beta&t=akCO1OL-gEGMNZsvqCtk0-hinn-ACZLEIltfpEPHCzo" alt="Rajesh Choudhury" class="w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-2 md:mb-3 object-cover shadow-lg border-2 border-purple-500/50 transition-transform duration-500 hover:scale-110 cursor-pointer">
+                        <h2 class="text-white font-bold text-base md:text-lg">Rajesh Choudhury</h2>
+                        <p class="text-purple-400 text-xs font-mono">Full Stack & AI Engineer</p>
+                    </div>
+                    <nav class="space-y-1 md:space-y-2">
+                        <button onclick="switchTab('about')" class="w-full text-left px-3 md:px-4 py-2 rounded-lg bg-white/10 text-xs md:text-sm hover:bg-white/20 transition text-white">About Me</button>
+                        <button onclick="switchTab('experience')" class="w-full text-left px-3 md:px-4 py-2 rounded-lg hover:bg-white/10 text-xs md:text-sm transition text-gray-400 hover:text-white">Experience</button>
+                        <button onclick="switchTab('skills')" class="w-full text-left px-3 md:px-4 py-2 rounded-lg hover:bg-white/10 text-xs md:text-sm transition text-gray-400 hover:text-white">Tech Stack</button>
+                        <button onclick="switchTab('resume')" class="w-full text-left px-3 md:px-4 py-2 rounded-lg hover:bg-white/10 text-xs md:text-sm transition text-gray-400 hover:text-white flex items-center justify-between group">
+                            <span>Resume</span>
+                            <i class="fas fa-file-pdf text-xs opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </button>
+                    </nav>
+
+                    <div class="mt-4 md:mt-8 pt-4 md:pt-6 border-t border-white/10">
+                        <div class="text-xs text-gray-500 font-mono mb-2">CONTACT</div>
+                        <a href="mailto:rajesh.c@abi-health.com" class="flex items-center gap-2 text-xs md:text-sm text-gray-300 hover:text-white mb-2"><i class="fas fa-envelope text-xs md:text-sm"></i> <span class="hidden md:inline">Email Me</span></a>
+                        <a href="https://www.linkedin.com/in/rajesh-chowdhury-software-developer/" target="_blank" class="flex items-center gap-2 text-xs md:text-sm text-gray-300 hover:text-white"><i class="fab fa-linkedin text-xs md:text-sm"></i> <span class="hidden md:inline">LinkedIn</span></a>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-4 md:p-8 overflow-y-auto" id="tab-content">
+                    <div id="content-about" class="animate-fade-in">
+                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">Hello, I'm Rajesh.</h1>
+                        <p class="text-gray-400 text-base md:text-lg mb-4 md:mb-6">I build scalable AI systems and robust backends.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            <div class="p-3 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-purple-500/50 transition">
+                                <i class="fas fa-brain text-purple-400 text-lg md:text-2xl mb-2"></i>
+                                <h3 class="font-bold text-white text-sm md:text-base">AI & GenAI</h3>
+                                <p class="text-xs md:text-sm text-gray-400 mt-1">Specialized in RAG Pipelines, Custom LLMs, and Vector Stores (Supabase).</p>
+                            </div>
+                            <div class="p-3 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/50 transition">
+                                <i class="fas fa-layer-group text-blue-400 text-lg md:text-2xl mb-2"></i>
+                                <h3 class="font-bold text-white text-sm md:text-base">Full Stack</h3>
+                                <p class="text-xs md:text-sm text-gray-400 mt-1">Expert in ASP.NET MVC, C#, Python FastAPI, and Modern Auth.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 md:mt-8">
+                            <h3 class="font-bold text-white mb-3 md:mb-4 text-base md:text-lg">Key Achievements</h3>
+                            <div class="space-y-2 md:space-y-3">
+                                <div class="p-2 md:p-3 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl border border-white/10 hover:border-purple-500/30 transition">
+                                    <div class="flex items-start gap-2 md:gap-3">
+
+                                        <div class="mt-1 p-1.5 bg-purple-500/20 rounded-lg">
+                                            <i class="fas fa-robot text-purple-400 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-sm">AI Innovation Lead</h4>
+                                            <p class="text-xs text-gray-400 mt-1">Architecting RAG pipelines and secured AI backends at <strong>ABI Health</strong>.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-gradient-to-r from-blue-900/40 to-cyan-900/40 rounded-xl border border-white/10 hover:border-blue-500/30 transition">
+                                    <div class="flex items-start gap-3">
+                                        <div class="mt-1 p-1.5 bg-blue-500/20 rounded-lg">
+                                            <i class="fas fa-shield-alt text-blue-400 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-sm">Enterprise Security</h4>
+                                            <p class="text-xs text-gray-400 mt-1">Implemented Row-Level Security (RLS) in PostgreSQL for sensitive healthcare data.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-gradient-to-r from-green-900/40 to-emerald-900/40 rounded-xl border border-white/10 hover:border-green-500/30 transition">
+                                    <div class="flex items-start gap-3">
+                                        <div class="mt-1 p-1.5 bg-green-500/20 rounded-lg">
+                                            <i class="fas fa-mobile-alt text-green-400 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-sm">Cross-Platform Mobile</h4>
+                                            <p class="text-xs text-gray-400 mt-1">Delivered robust mobile solutions using Flutter & Android Studio.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>
+            </div>
+        </div>
+
+        <div id="win-terminal" class="window-frame w-[90%] md:w-[700px] h-[450px] bg-gray-950/95" style="top: 50%; left: 50%; z-index: 11;">
+            <div class="title-bar bg-gray-800" onmousedown="dragStart(event, 'win-terminal')">
+                <div class="traffic-lights">
+                    <div class="light close-btn" onclick="closeWindow('win-terminal')"></div>
+                    <div class="light min-btn"></div>
+                    <div class="light max-btn"></div>
+                </div>
+                <div class="text-sm font-mono text-gray-400 flex items-center gap-2">
+                    <i class="fas fa-terminal text-green-500"></i> guest@rajesh-os:~
+                </div>
+                <div class="w-10"></div>
+            </div>
+            
+            <div class="window-content p-4 font-mono text-sm cursor-text" onclick="document.getElementById('cli-input').focus()">
+                <div id="terminal-output" class="text-gray-300 space-y-1">
+                    <div class="text-gray-500">Microsoft Windows [Version 11.0.22]</div>
+                    <div class="text-gray-500">(c) Rajesh Corp. All rights reserved.</div>
+                    <br>
+                    <div class="text-green-400">Welcome to RajeshCLI. Type <span class="text-yellow-300">'help'</span> for commands.</div>
+                    <br>
+                </div>
+                <div class="flex items-center mt-2 bg-white/5 p-2 rounded border border-white/10">
+                    <span class="text-green-500 mr-2">➜</span>
+                    <span class="text-blue-400 mr-2">~</span>
+                    <input type="text" id="cli-input" placeholder="Type command here (e.g., 'help')..." class="bg-transparent border-none outline-none flex-1 text-white caret-green-500 font-mono" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <div class="dock-container">
+            <div class="dock">
+                <div id="dock-profile" class="dock-icon running" onclick="openWindow('win-profile')" title="My Profile">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div id="dock-terminal" class="dock-icon" onclick="toggleTerminal()" title="Terminal" style="background: #1e293b;">
+                    <i class="fas fa-terminal"></i>
+                </div>
+                <a href="https://github.com/rajeshc-git" target="_blank" class="dock-icon" title="GitHub" style="background: #333;">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/rajesh-chowdhury-software-developer/" target="_blank" class="dock-icon" title="LinkedIn" style="background: #0077b5;">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- DATA STORE ---
+        const contentData = {
+            'about': document.getElementById('content-about').innerHTML,
+            'experience': `
+                <h2 class="text-2xl font-bold text-white mb-6">Work History</h2>
+                <div class="space-y-6 relative border-l border-white/10 ml-2 pl-6">
+                    <div class="relative">
+                        <div class="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+                        <h3 class="text-xl font-bold text-white">Senior Software Engineer</h3>
+                        <p class="text-purple-400 text-sm">ABI Health | Dec 2025 - Present</p>
+                        <ul class="mt-2 text-sm text-gray-400 list-disc list-inside space-y-1">
+                            <li>Leading AI/ML innovation with Python, Node.js, and FastAPI.</li>
+                            <li>Building RAG pipelines and Custom LLM solutions.</li>
+                            <li>Mobile app delivery via Flutter & Android Studio.</li>
+                        </ul>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-gray-500"></div>
+                        <h3 class="text-lg font-bold text-gray-200">System Analyst</h3>
+                        <p class="text-gray-500 text-sm">ABI Health | Sep 2023 - Nov 2025</p>
+                        <ul class="mt-2 text-sm text-gray-400 list-disc list-inside space-y-1">
+                            <li>Full Stack Dev: ASP.NET MVC (C#), REST APIs.</li>
+                            <li>Implemented Row-Level Security (RLS) in PostgreSQL.</li>
+                        </ul>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-gray-500"></div>
+                        <h3 class="text-lg font-bold text-gray-200">Software Engineer</h3>
+                        <p class="text-gray-500 text-sm">DIT, Tripura | Jan 2022 - Aug 2023</p>
+                        <p class="mt-2 text-sm text-gray-400">Built scalable Govt Enterprise Web Apps using ASP.NET MVC and Android Native Apps.</p>
+                    </div>
+                </div>
+            `,
+            'skills': `
+                <h2 class="text-2xl font-bold text-white mb-6">Technical Arsenal</h2>
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Languages & Frameworks</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded text-xs border border-purple-500/30">C#</span>
+                            <span class="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs border border-yellow-500/30">Python</span>
+                            <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded text-xs border border-blue-500/30">ASP.NET MVC</span>
+                            <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded text-xs border border-green-500/30">FastAPI</span>
+                            <span class="px-3 py-1 bg-sky-500/20 text-sky-300 rounded text-xs border border-sky-500/30">Flutter</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">AI & Cloud</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-pink-500/20 text-pink-300 rounded text-xs border border-pink-500/30">RAG Pipelines</span>
+                            <span class="px-3 py-1 bg-pink-500/20 text-pink-300 rounded text-xs border border-pink-500/30">LLM Integration</span>
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded text-xs border border-indigo-500/30">Supabase</span>
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded text-xs border border-indigo-500/30">Postgres Vector</span>
+                        </div>
+                    </div>
+                </div>
+            `
+            ,
+            'resume': `
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <h2 class="text-2xl font-bold text-white">Resume</h2>
+                    <div class="flex items-center gap-3">
+                        <a href="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" target="_blank" class="text-sm text-gray-300 hover:text-white underline">Open in new tab</a>
+                        <button type="button" onclick="downloadResumePdf()" class="text-sm text-gray-300 hover:text-white underline">Download PDF</button>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-white/10 overflow-hidden bg-black/20" style="height: 520px;">
+                    <object data="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" type="application/pdf" class="w-full h-full">
+                        <iframe title="Rajesh Resume" src="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" class="w-full h-full"></iframe>
+                    </object>
+                </div>
+
+                <p class="text-xs text-gray-500 mt-3">If it doesn’t render in your browser, use “Open in new tab” or “Download PDF”.</p>
+            `
+        };
+
+        async function downloadResumePdf() {
+            const url = 'https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf';
+            try {
+                const res = await fetch(url, { cache: 'no-cache' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const blob = await res.blob();
+
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = 'rajesh resume 2.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(blobUrl);
+            } catch (err) {
+                // Fallback: open in new tab if download is blocked
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        // --- DRAG AND DROP ENGINE (FIXED) ---
+        let draggedWindow = null;
+        let startX, startY, initialLeft, initialTop;
+        let zIndexCounter = 100;
+
+        function dragStart(e, id) {
+            draggedWindow = document.getElementById(id);
+            bringToFront(draggedWindow);
+
+            // Calculate offset from the top-left corner of the window
+            const rect = draggedWindow.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = rect.left;
+            initialTop = rect.top;
+
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('mouseup', dragEnd);
+        }
+
+        function dragMove(e) {
+            if (!draggedWindow) return;
+            e.preventDefault();
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            draggedWindow.style.left = `${initialLeft + dx}px`;
+            draggedWindow.style.top = `${initialTop + dy}px`;
+            // Reset transform to avoid conflict with initial CSS centering or scale
+            draggedWindow.style.transform = "none"; 
+        }
+
+        function dragEnd() {
+            draggedWindow = null;
+            document.removeEventListener('mousemove', dragMove);
+            document.removeEventListener('mouseup', dragEnd);
+        }
+
+        function bringToFront(el) {
+            zIndexCounter++;
+            el.style.zIndex = zIndexCounter;
+        }
+
+        // --- WINDOW MANAGER ---
+        function openWindow(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            win.classList.add('active');
+
+            // Force visibility in case any inline/CSS overrides exist
+            win.style.display = 'flex';
+            win.style.opacity = '1';
+            win.style.visibility = 'visible';
+            win.style.pointerEvents = 'all';
+
+            bringToFront(win);
+            // Toggle running dot in dock (convention: dock id = 'dock-' + <window id without 'win-'>)
+            const dockIcon = document.getElementById('dock-' + id.replace('win-', ''));
+            if (dockIcon) dockIcon.classList.add('running');
+            // If opening terminal, focus its input
+            if (id === 'win-terminal') setTimeout(() => document.getElementById('cli-input').focus(), 60);
+        }
+
+        function closeWindow(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            win.classList.remove('active');
+
+            // Force hidden state
+            win.style.opacity = '0';
+            win.style.pointerEvents = 'none';
+            setTimeout(() => {
+                if (!win.classList.contains('active')) win.style.visibility = 'hidden';
+            }, 220);
+
+            // Toggle running dot
+            const dockIcon = document.getElementById('dock-' + id.replace('win-', ''));
+            if (dockIcon) dockIcon.classList.remove('running');
+        }
+
+        function createResumeFireworks() {
+            const container = document.getElementById('tab-content');
+            if (!container) return;
+
+            // More edge sparkles - densely packed around all edges
+            const positions = [
+                {x:'5%',y:'5%'},{x:'15%',y:'5%'},{x:'25%',y:'5%'},{x:'35%',y:'5%'},{x:'50%',y:'5%'},{x:'65%',y:'5%'},{x:'75%',y:'5%'},{x:'85%',y:'5%'},{x:'95%',y:'5%'},
+                {x:'5%',y:'25%'},{x:'5%',y:'50%'},{x:'5%',y:'75%'},{x:'95%',y:'25%'},{x:'95%',y:'50%'},{x:'95%',y:'75%'},
+                {x:'5%',y:'95%'},{x:'15%',y:'95%'},{x:'25%',y:'95%'},{x:'35%',y:'95%'},{x:'50%',y:'95%'},{x:'65%',y:'95%'},{x:'75%',y:'95%'},{x:'85%',y:'95%'},{x:'95%',y:'95%'}
+            ];
+            
+            positions.forEach((pos, i) => {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'swirl-particle';
+                    p.textContent = ['✨', '⭐', '💫', '🌟'][Math.floor(Math.random() * 4)];
+                    p.style.left = pos.x;
+                    p.style.top = pos.y;
+                    container.appendChild(p);
+                    setTimeout(() => p.remove(), 1500);
+                }, i * 60);
+            });
+
+            // Burst from center - increased particles
+            for (let i = 0; i < 40; i++) {
+                const angle = (i / 40) * Math.PI * 2;
+                const distance = 150 + Math.random() * 100;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'burst-particle';
+                    p.style.left = '50%';
+                    p.style.top = '50%';
+                    p.style.setProperty('--tx', `${tx}px`);
+                    p.style.setProperty('--ty', `${ty}px`);
+                    container.appendChild(p);
+                    setTimeout(() => p.remove(), 1200);
+                }, i * 30);
+            }
+
+            // Secondary burst wave
+            setTimeout(() => {
+                for (let i = 0; i < 25; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 100 + Math.random() * 150;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+
+                    const p = document.createElement('div');
+                    p.className = 'burst-particle';
+                    p.style.left = '50%';
+                    p.style.top = '50%';
+                    p.style.setProperty('--tx', `${tx}px`);
+                    p.style.setProperty('--ty', `${ty}px`);
+                    container.appendChild(p);
+                    setTimeout(() => p.remove(), 1200);
+                }
+            }, 500);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function switchTab(tabName) {
+            const contentDiv = document.getElementById('tab-content');
+            if (tabName === 'resume') {
+                setTimeout(() => createResumeFireworks(), 100);
+            }
+            
+            // Close sidebar on mobile when navigating
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('open') && window.innerWidth < 768) {
+                sidebar.classList.remove('open');
+            }
+            
+            // Fade out
+            contentDiv.style.opacity = '0';
+            
+            setTimeout(() => {
+                contentDiv.innerHTML = contentData[tabName] || '<p>Content not found</p>';
+                contentDiv.style.opacity = '1';
+                contentDiv.style.transition = 'opacity 0.2s';
+            }, 200);
+
+            // Update active state on sidebar
+            const buttons = document.querySelectorAll('nav button');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-white/10', 'text-white');
+                btn.classList.add('text-gray-400');
+            });
+            // Highlight clicked (simple logic for demo)
+            event.target.classList.remove('text-gray-400');
+            event.target.classList.add('bg-white/10', 'text-white');
+        }
+
+        // --- TERMINAL LOGIC ---
+        const cliInput = document.getElementById('cli-input');
+        const cliOutput = document.getElementById('terminal-output');
+
+        function toggleTerminal() {
+            console.log('Toggling terminal...');
+            const win = document.getElementById('win-terminal');
+            if (win.classList.contains('active')) {
+                closeWindow('win-terminal');
+            } else {
+                openWindow('win-terminal');
+            }
+        }
+
+        const fileSystem = {
+            'ls': 'about.txt  skills.json  experience.log  contact.md  projects.txt',
+            'whoami': 'root (Rajesh Choudhury)',
+            'date': new Date().toString(),
+            'cat about.txt': 'Senior Software Engineer @ ABI Health. Passionate about AI/ML and scalable architecture.',
+            'cat skills.json': `{
+  "languages": ["C#", "Python", "JavaScript"],
+  "frameworks": ["ASP.NET MVC", "FastAPI", "Flutter", "Node.js"],
+  "ai_cloud": ["RAG Pipelines", "LLM Integration", "Supabase", "Postgres Vector"]
+}`,
+            'cat experience.log': `<div class="space-y-2">
+  <div class="text-purple-400 font-bold">ABI Health (Dec 2025 - Present)</div>
+  <div class="pl-4 text-gray-300">Role: Senior Software Engineer</div>
+  <ul class="pl-8 list-disc text-gray-400">
+    <li>Leading AI/ML innovation (Python, Node.js, FastAPI)</li>
+    <li>Building RAG pipelines & Custom LLM solutions</li>
+    <li>Mobile App Delivery (Flutter, Android Studio)</li>
+  </ul>
+  
+  <div class="text-blue-400 font-bold mt-2">ABI Health (Sep 2023 - Nov 2025)</div>
+  <div class="pl-4 text-gray-300">Role: System Analyst</div>
+  <ul class="pl-8 list-disc text-gray-400">
+    <li>Full Stack Development (ASP.NET MVC, C#)</li>
+    <li>Implemented Row-Level Security (RLS) in PostgreSQL</li>
+  </ul>
+
+  <div class="text-green-400 font-bold mt-2">DIT, Tripura (Jan 2022 - Aug 2023)</div>
+  <div class="pl-4 text-gray-300">Role: Software Engineer</div>
+  <ul class="pl-8 list-disc text-gray-400">
+    <li>Built scalable Govt Enterprise Web Apps (ASP.NET MVC)</li>
+    <li>Android Native App Development</li>
+  </ul>
+</div>`,
+            'cat contact.md': `<div class="space-y-1">
+  <div><i class="fas fa-envelope w-6"></i> rajesh.c@abi-health.com</div>
+  <div><i class="fab fa-linkedin w-6"></i> <a href="https://www.linkedin.com/in/rajesh-chowdhury-software-developer/" target="_blank" class="text-blue-400 underline">LinkedIn Profile</a></div>
+  <div><i class="fab fa-github w-6"></i> <a href="https://github.com/rajeshc-git" target="_blank" class="text-gray-400 underline">GitHub Profile</a></div>
+</div>`,
+            'cat projects.txt': `<div class="space-y-2">
+  <div><span class="text-yellow-400">* Rajesh_OS Portfolio</span> - Interactive OS-themed portfolio website.</div>
+  <div><span class="text-yellow-400">* AI RAG Pipeline</span> - Enterprise knowledge retrieval system using Vector DBs.</div>
+  <div><span class="text-yellow-400">* Govt Enterprise Apps</span> - Scalable web solutions for DIT Tripura.</div>
+</div>`,
+            'help': `<div class="space-y-1">
+  <div class="text-yellow-300 font-bold">Available Commands:</div>
+  <div><span class="text-green-400">ls</span>              - List all files</div>
+  <div><span class="text-green-400">whoami</span>          - Display current user</div>
+  <div><span class="text-green-400">date</span>            - Show system date/time</div>
+  <div><span class="text-green-400">clear</span>           - Clear terminal screen</div>
+  <div><span class="text-green-400">exit</span>            - Close terminal window</div>
+  <div class="mt-2 text-yellow-300 font-bold">File Viewer:</div>
+  <div><span class="text-blue-400">cat experience.log</span> - View work history</div>
+  <div><span class="text-blue-400">cat skills.json</span>    - View technical skills</div>
+  <div><span class="text-blue-400">cat projects.txt</span>   - View project list</div>
+  <div><span class="text-blue-400">cat contact.md</span>     - View contact info</div>
+  <div><span class="text-blue-400">cat about.txt</span>      - View bio</div>
+</div>`
+        };
+
+        cliInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = cliInput.value.trim();
+                const timestamp = new Date().toLocaleTimeString();
+                
+                // Add command to history
+                cliOutput.innerHTML += `<div><span class="text-green-500">➜</span> <span class="text-blue-400">~</span> ${cmd}</div>`;
+                
+                // Process
+                let response = '';
+                if (cmd === 'clear') {
+                    cliOutput.innerHTML = '';
+                    cliInput.value = '';
+                    return;
+                } else if (cmd === 'exit') {
+                    closeWindow('win-terminal');
+                    cliInput.value = '';
+                    return;
+                } else if (fileSystem[cmd]) {
+                    response = fileSystem[cmd];
+                } else if (cmd.startsWith('cat ')) {
+                    // Simple file reader simulation
+                    if (fileSystem[cmd]) response = fileSystem[cmd];
+                    else response = `cat: ${cmd.split(' ')[1]}: No such file or directory`;
+                } else if (cmd !== '') {
+                    response = `bash: ${cmd}: command not found`;
+                }
+
+                if (response) {
+                    cliOutput.innerHTML += `<div class="text-gray-400 mb-2">${response}</div>`;
+                }
+
+                cliInput.value = '';
+                // Auto scroll
+                document.querySelector('#win-terminal .window-content').scrollTop = document.querySelector('#win-terminal .window-content').scrollHeight;
+            }
+        });
+
+        // Initialize
+        window.onload = () => {
+            // Start boot animation is handled by CSS
+            // Open Profile window after boot
+            setTimeout(() => {
+                openWindow('win-profile');
+            }, 3800);
+        };
+
+    </script>
+</body>
+</html>
