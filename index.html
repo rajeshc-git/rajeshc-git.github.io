@@ -549,18 +549,42 @@
             100% { opacity: 0; visibility: hidden; }
         }
 
+        /* Typing Animation */
+        .boot-line {
+            min-height: 1.5em;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+        }
+
+        .boot-line::after {
+            content: '_';
+            animation: blink 0.7s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes fadeOutBoot {
+            0% { opacity: 1; }
+            100% { opacity: 0; pointer-events: none; }
+        }
+
     </style>
 </head>
 <body>
 
     <div id="boot-screen">
-        <div>> BOOTING RAJESH_OS KERNEL...</div>
-        <div>> LOADING MODULES: [AI, RAG, ASP.NET, PYTHON, FLUTTER]</div>
-        <div>> MOUNTING EXPERIENCE: ABI HEALTH... OK</div>
-        <div>> MOUNTING EXPERIENCE: DIT TRIPURA... OK</div>
-        <div>> CHECKING CERTIFICATES: GOOGLE_CERTIFIED... FOUND</div>
-        <div>> INITIALIZING GUI...</div>
-        <div style="margin-top: 20px; color: #fff;">[ OK ] SYSTEM READY. WELCOME, RECRUITER.</div>
+        <div class="boot-line" data-text="> BOOTING RAJESH_OS KERNEL..."></div>
+        <div class="boot-line" data-text="> LOADING MODULES: [AI, RAG, ASP.NET, PYTHON, FLUTTER]"></div>
+        <div class="boot-line" data-text="> MOUNTING EXPERIENCE: ABI HEALTH... OK"></div>
+        <div class="boot-line" data-text="> MOUNTING EXPERIENCE: DIT TRIPURA... OK"></div>
+        <div class="boot-line" data-text="> CHECKING CERTIFICATES: GOOGLE_CERTIFIED... FOUND"></div>
+        <div class="boot-line" data-text="> INITIALIZING GUI..."></div>
+        <div class="boot-line" data-text="[ OK ] SYSTEM READY. WELCOME, RECRUITER." style="margin-top: 20px; color: #fff;"></div>
     </div>
 
     <main class="w-screen h-screen relative overflow-hidden">
@@ -721,6 +745,43 @@
     </main>
 
     <script>
+        // --- TYPING ANIMATION FOR BOOT SCREEN ---
+        function typeBootScreen() {
+            const bootLines = document.querySelectorAll('.boot-line');
+            let totalDelay = 0;
+            
+            bootLines.forEach((line, index) => {
+                const text = line.getAttribute('data-text');
+                line.textContent = ''; // Clear existing text
+                
+                setTimeout(() => {
+                    let charIndex = 0;
+                    const typeInterval = setInterval(() => {
+                        if (charIndex < text.length) {
+                            line.textContent += text[charIndex];
+                            charIndex++;
+                        } else {
+                            clearInterval(typeInterval);
+                        }
+                    }, 8); // 8ms per character for superfast typing
+                }, totalDelay);
+                
+                totalDelay += (text.length * 8) + 50; // Much shorter delays between lines
+            });
+            
+            // Hide boot screen after all text is typed (1.5-2 seconds total)
+            setTimeout(() => {
+                const bootScreen = document.getElementById('boot-screen');
+                // Hide cursor before fading
+                bootScreen.style.opacity = '0';
+                bootScreen.style.pointerEvents = 'none';
+                bootScreen.style.transition = 'opacity 0.8s ease-in-out';
+            }, totalDelay + 800);
+        }
+
+        // Start typing animation when page loads
+        window.addEventListener('load', typeBootScreen);
+
         // --- DATA STORE ---
         const contentData = {
             'about': document.getElementById('content-about').innerHTML,
