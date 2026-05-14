@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rajesh Choudhury | OS Portfolio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
 
         :root {
-            --glass-bg: rgba(9, 9, 14, 0.85);
-            --glass-border: rgba(0, 255, 255, 0.15);
+            --glass-bg: rgba(9, 9, 14, 0.9);
+            --glass-border: rgba(0, 240, 255, 0.2);
             --accent-cyan: #00f0ff;
             --accent-green: #00ff41;
             --hacker-bg: #030305;
+            --title-bar-height: 35px;
         }
 
         body {
@@ -25,13 +26,15 @@
             background-color: var(--hacker-bg);
             user-select: none;
             color: #e2e8f0;
+            height: 100vh;
+            width: 100vw;
         }
 
         /* CYBERSPACE GRID BACKGROUND */
         .cyber-grid {
             position: fixed;
             inset: -50%;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(0, 240, 255, 0.07) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 240, 255, 0.07) 1px, transparent 1px);
             background-size: 40px 40px;
@@ -41,21 +44,24 @@
         }
 
         @keyframes gridMove {
-            0% { transform: perspective(600px) rotateX(60deg) translateY(0); }
-            100% { transform: perspective(600px) rotateX(60deg) translateY(40px); }
+            0% {
+                transform: perspective(600px) rotateX(60deg) translateY(0);
+            }
+
+            100% {
+                transform: perspective(600px) rotateX(60deg) translateY(40px);
+            }
         }
 
         /* CRT SCANLINE OVERLAY */
         .scanlines {
             position: fixed;
             inset: 0;
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.1) 50%,
-                rgba(0,0,0,0.1)
-            );
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(0, 0, 0, 0.1) 50%,
+                    rgba(0, 0, 0, 0.1));
             background-size: 100% 4px;
             z-index: 9998;
             pointer-events: none;
@@ -81,21 +87,23 @@
         .window-frame {
             position: absolute;
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.05), inset 0 0 20px rgba(0, 240, 255, 0.02);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.1);
             display: flex;
             flex-direction: column;
-            transition: transform 0.1s, opacity 0.2s;
+            /* Remove top/left from transitions to allow smooth dragging */
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s, width 0.3s, height 0.3s;
             overflow: hidden;
             min-width: 300px;
             min-height: 200px;
-            opacity: 0; 
+            opacity: 0;
             visibility: hidden;
-            transform: translate(-50%, -50%) scale(0.95);
+            transform: translate(-50%, -50%) scale(0.9);
             pointer-events: none;
+            z-index: 10;
         }
 
         .window-frame.active {
@@ -105,9 +113,31 @@
             pointer-events: all;
         }
 
+        .window-frame.maximized {
+            width: 100vw !important;
+            height: calc(100vh - 80px) !important;
+            /* Leave room for dock */
+            top: calc(50vh - 40px) !important;
+            left: 50vw !important;
+            border-radius: 0;
+        }
+
+        @media (max-width: 768px) {
+            .window-frame {
+                width: 96% !important;
+                height: 88% !important;
+                min-width: unset;
+                top: 46% !important;
+            }
+
+            .window-frame.active {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
         .title-bar {
-            height: 35px;
-            background: linear-gradient(90deg, rgba(10,10,15,1) 0%, rgba(20,20,30,1) 100%);
+            height: var(--title-bar-height);
+            background: linear-gradient(90deg, rgba(15, 15, 25, 1) 0%, rgba(30, 30, 45, 1) 100%);
             border-bottom: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
@@ -117,46 +147,96 @@
             position: relative;
         }
 
-        .title-bar:active { cursor: grabbing; }
+        .title-bar:active {
+            cursor: grabbing;
+        }
 
-        .traffic-lights { display: flex; gap: 8px; }
-        .light { width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); }
-        .close-btn { background: #ff5f56; cursor: pointer; }
-        .min-btn { background: #ffbd2e; cursor: pointer; }
-        .max-btn { background: #27c93f; }
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .close-btn {
+            background: #ff5f56;
+            cursor: pointer;
+        }
+
+        .min-btn {
+            background: #ffbd2e;
+            cursor: pointer;
+        }
+
+        .max-btn {
+            background: #27c93f;
+            cursor: pointer;
+        }
+
+        .close-btn:hover::after {
+            content: '×';
+        }
 
         .window-content {
             flex: 1;
-            overflow-y: auto;
+            overflow: hidden;
+            /* Prevent double scrollbars */
             color: #cbd5e1;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-cyan) transparent;
+            position: relative;
+            display: flex;
         }
 
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 2px; }
+        /* SCROLLBAR STYLING - Applying to all scrollable areas */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 240, 255, 0.2) transparent;
+        }
 
-        /* CYBER BORDER FOR RESUME (Replaces Sparkles) */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+
+        /* CYBER BORDER */
         .cyber-border {
             position: relative;
-        }
-        .cyber-border::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
+            padding: 1px;
             background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
             background-size: 200% 100%;
             animation: cyberScan 3s linear infinite;
-            z-index: -1;
-            border-radius: 10px;
-            opacity: 0.7;
+            border-radius: 8px;
         }
 
         @keyframes cyberScan {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         /* GLITCH HOVER EFFECT */
@@ -167,12 +247,29 @@
         }
 
         @keyframes glitch {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 2px) }
-            40% { transform: translate(-2px, -2px) }
-            60% { transform: translate(2px, 2px) }
-            80% { transform: translate(2px, -2px) }
-            100% { transform: translate(0) }
+            0% {
+                transform: translate(0)
+            }
+
+            20% {
+                transform: translate(-2px, 2px)
+            }
+
+            40% {
+                transform: translate(-2px, -2px)
+            }
+
+            60% {
+                transform: translate(2px, 2px)
+            }
+
+            80% {
+                transform: translate(2px, -2px)
+            }
+
+            100% {
+                transform: translate(0)
+            }
         }
 
         /* DOCK */
@@ -182,76 +279,197 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
+            width: auto;
+            max-width: 95vw;
         }
-        
+
         .dock {
-            background: rgba(5, 5, 10, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            padding: 10px 16px;
-            border-radius: 16px;
+            background: rgba(10, 10, 20, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
             display: flex;
-            gap: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px rgba(0, 240, 255, 0.1);
+            gap: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.1);
         }
 
         .dock-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
-            background: #111;
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
             color: #fff;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
         }
 
-        .dock-icon:hover { 
-            transform: translateY(-8px); 
+        .dock-icon:hover {
+            transform: translateY(-10px) scale(1.15);
             border-color: var(--accent-cyan);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            box-shadow: 0 10px 20px rgba(0, 240, 255, 0.3);
             color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
         }
-        
+
         .dock-icon.running::after {
             content: '';
             position: absolute;
-            bottom: -6px;
+            bottom: -5px;
             width: 4px;
             height: 4px;
             background: var(--accent-cyan);
             border-radius: 50%;
-            box-shadow: 0 0 5px var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        /* SELECTION GLOW EFFECTS */
+        .exp-item {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            position: relative;
+        }
+
+        .exp-item.selected {
+            background: rgba(0, 240, 255, 0.08);
+            border-color: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.1), inset 0 0 15px rgba(0, 240, 255, 0.05);
+            transform: translateX(10px);
+        }
+
+        .exp-item.selected .exp-dot {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 20px var(--accent-cyan);
+        }
+
+        .exp-item.selected .exp-dot .inner-dot {
+            background: white;
+        }
+
+        .exp-item.selected .exp-title {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        .exp-item.selected .exp-company {
+            color: var(--accent-cyan) !important;
+            opacity: 1 !important;
+        }
+        .exp-item.selected .exp-arrow {
+            color: var(--accent-cyan) !important;
+            text-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        .skill-tag {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .skill-tag:hover,
+        .skill-tag.active {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            background: rgba(0, 240, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 260px;
+                transform: translateX(-100%);
+                z-index: 100;
+                display: block !important;
+            }
+
+            #sidebar.sidebar-open {
+                transform: translateX(0);
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+            }
+
+            .sidebar-backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(4px);
+                z-index: 90;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s;
+            }
+
+            .sidebar-backdrop.active {
+                opacity: 1;
+                visibility: visible;
+            }
         }
 
         /* CLI TYPING */
         .boot-line {
             min-height: 1.5em;
         }
+
         .boot-line::after {
             content: '█';
             animation: blink 0.5s infinite;
             margin-left: 4px;
         }
-        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
-        /* RESPONSIVE TWEAKS */
-        @media (max-width: 768px) {
-            .window-frame { min-width: 280px; min-height: 180px; }
-            #sidebar { display: none; }
-            #sidebar.open { display: block; animation: fadeSlide 0.3s forwards; }
-            .dock-icon { width: 40px; height: 40px; font-size: 18px; }
+        @keyframes blink {
+
+            0%,
+            49% {
+                opacity: 1;
+            }
+
+            50%,
+            100% {
+                opacity: 0;
+            }
         }
-        @keyframes fadeSlide { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
+
 <body>
-    
+
+    <!-- IMAGE MODAL (LIGHTBOX) -->
+    <div id="image-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-0 md:p-10 backdrop-blur-3xl bg-black/90 transition-all duration-300 opacity-0" onclick="closeImageModal()">
+        <div class="relative max-w-5xl max-h-full w-full h-full flex items-center justify-center p-4">
+            <div class="cyber-border p-1 rounded-2xl bg-cyan-500/10 shadow-[0_0_50px_rgba(0,240,255,0.3)]">
+                <img id="modal-img" src="" class="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl">
+            </div>
+            <button class="absolute top-5 right-5 text-white hover:text-cyan-400 transition-all bg-black/50 w-10 h-10 rounded-full flex items-center justify-center border border-white/20" onclick="closeImageModal()">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- BACKGROUND EFFECTS -->
     <div class="cyber-grid"></div>
     <div class="scanlines"></div>
@@ -263,91 +481,152 @@
         <div class="boot-line" data-text="> ESTABLISHING SECURE CONNECTION ... DONE"></div>
         <div class="boot-line" data-text="> MOUNTING KNOWLEDGE BASE: ABI HEALTH ... OK"></div>
         <div class="boot-line" data-text="> BYPASSING MAINFRAME FIREWALL ... GRANTED"></div>
-        <div class="boot-line" data-text="[ OK ] WELCOME, RECRUITER. ACCESS LEVEL: ROOT" style="margin-top: 20px; color: var(--accent-cyan);"></div>
+        <div class="boot-line" data-text="[ OK ] WELCOME, RECRUITER. ACCESS LEVEL: ROOT"
+            style="margin-top: 20px; color: var(--accent-cyan);"></div>
     </div>
 
     <main class="w-screen h-screen relative overflow-hidden">
-        
+
         <!-- PROFILE WINDOW -->
-        <div id="win-profile" class="window-frame w-[90%] md:w-[900px] h-[80%] md:h-[600px]" style="top: 50%; left: 50%; z-index: 10;">
-            <div class="title-bar" onmousedown="dragStart(event, 'win-profile')">
+        <div id="win-profile" class="window-frame w-[92%] md:w-[900px] h-[88%] md:h-[min(720px,85vh)]"
+            style="top: 46%; left: 50%;">
+            <div class="title-bar" onmousedown="dragStart(event, 'win-profile')"
+                ontouchstart="dragStart(event, 'win-profile')">
                 <div class="traffic-lights">
                     <div class="light close-btn" onclick="closeWindow('win-profile')"></div>
-                    <div class="light min-btn"></div>
-                    <div class="light max-btn"></div>
+                    <div class="light min-btn" onclick="closeWindow('win-profile')"></div>
+                    <div class="light max-btn" onclick="toggleMaximize('win-profile')"></div>
                 </div>
-                <div class="flex-1 text-center text-xs font-mono tracking-widest text-cyan-500/70">
-                    USER_PROFILE.EXE
+                <div class="flex-1 text-center text-[10px] font-mono tracking-[0.3em] text-cyan-500/70 uppercase">
+                    user_profile.exe
                 </div>
-                <button class="md:hidden text-cyan-400 hover:text-white" onclick="toggleSidebar()">
+                <button class="md:hidden text-cyan-400 hover:text-white p-1" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
-            
-            <div class="window-content bg-black/40 flex flex-col md:flex-row relative">
+
+            <div class="window-content bg-black/40 relative">
+                <!-- SIDEBAR BACKDROP (Mobile) -->
+                <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
                 <!-- SIDEBAR -->
-                <div id="sidebar" class="w-full md:w-64 bg-black/60 p-6 border-r border-cyan-500/20 absolute md:static inset-0 z-50 md:z-auto md:block backdrop-blur-md">
-                    <button onclick="toggleSidebar()" class="md:hidden float-right text-cyan-400 mb-4"><i class="fas fa-times"></i></button>
-                    <div class="text-center mb-6 clear-both">
-                        <div class="relative w-24 h-24 mx-auto mb-3">
-                            <img src="https://github.com/rajeshc-git/rajeshc-git.github.io/blob/main/user.png?raw=true" alt="Rajesh Choudhury" class="w-full h-full rounded border border-cyan-500 object-cover shadow-[0_0_15px_rgba(0,240,255,0.3)] filter grayscale hover:grayscale-0 transition-all duration-500">
-                            <div class="absolute inset-0 border border-cyan-500 animate-pulse pointer-events-none"></div>
+                <div id="sidebar"
+                    class="w-full md:w-64 bg-black/80 md:bg-black/60 p-6 border-r border-cyan-500/20 md:static backdrop-blur-xl overflow-y-auto">
+                    <button onclick="toggleSidebar()"
+                        class="md:hidden float-right text-cyan-400 mb-4 hover:text-white transition"><i
+                            class="fas fa-times text-xl"></i></button>
+                    <div class="text-center mb-8 clear-both">
+                        <div class="relative w-28 h-28 mx-auto mb-4 group cursor-zoom-in" onclick="openImageModal()">
+                            <img src="https://github.com/rajeshc-git/rajeshc-git.github.io/blob/main/user.png?raw=true"
+                                alt="Rajesh Choudhury"
+                                class="w-full h-full rounded-xl border border-cyan-500/50 object-cover shadow-[0_0_20px_rgba(0,240,255,0.2)] filter grayscale group-hover:grayscale-0 transition-all duration-700">
+                            <div
+                                class="absolute inset-0 border-2 border-cyan-500/30 rounded-xl animate-pulse pointer-events-none">
+                            </div>
+                            <div
+                                class="absolute -inset-1 border border-cyan-500/10 rounded-xl blur-sm pointer-events-none">
+                            </div>
                         </div>
-                        <h2 class="text-white font-bold tracking-wider">Rajesh C</h2>
-                        <p class="text-cyan-400 text-xs font-mono mt-1">Senior Software Engineer</p>
+                        <h2 class="text-white font-bold tracking-wider text-lg">Rajesh C</h2>
+                        <p class="text-cyan-400 text-xs font-mono mt-1 opacity-80">Senior Software Engineer</p>
                     </div>
-                    
-                    <nav class="space-y-2 font-mono text-sm">
-                        <button onclick="switchTab('about')" class="w-full text-left px-4 py-2 border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 transition hover:bg-cyan-500/20"><i class="fas fa-id-badge w-5"></i> INTRO</button>
-                        <button onclick="switchTab('experience')" class="w-full text-left px-4 py-2 border border-transparent text-gray-400 transition hover:text-cyan-300 hover:border-cyan-500/30"><i class="fas fa-network-wired w-5"></i> EXP</button>
-                        <button onclick="switchTab('skills')" class="w-full text-left px-4 py-2 border border-transparent text-gray-400 transition hover:text-cyan-300 hover:border-cyan-500/30"><i class="fas fa-microchip w-5"></i> STACK</button>
-                        <button onclick="switchTab('resume')" class="w-full text-left px-4 py-2 border border-transparent text-gray-400 transition hover:text-cyan-300 hover:border-cyan-500/30 flex justify-between items-center group">
+
+                    <nav class="space-y-3 font-mono text-xs">
+                        <button id="btn-about" onclick="switchTab('about')"
+                            class="w-full text-left px-4 py-3 border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 transition-all hover:bg-cyan-500/20 rounded-md"><i
+                                class="fas fa-id-badge w-5"></i> INTRO</button>
+                        <button id="btn-experience" onclick="switchTab('experience')"
+                            class="w-full text-left px-4 py-3 border border-transparent text-gray-400 transition-all hover:text-cyan-300 hover:border-cyan-500/20 hover:bg-white/5 rounded-md"><i
+                                class="fas fa-network-wired w-5"></i> EXP</button>
+                        <button id="btn-skills" onclick="switchTab('skills')"
+                            class="w-full text-left px-4 py-3 border border-transparent text-gray-400 transition-all hover:text-cyan-300 hover:border-cyan-500/20 hover:bg-white/5 rounded-md"><i
+                                class="fas fa-microchip w-5"></i> STACK</button>
+                        <button id="btn-resume" onclick="switchTab('resume')"
+                            class="w-full text-left px-4 py-3 border border-transparent text-gray-400 transition-all hover:text-cyan-300 hover:border-cyan-500/20 hover:bg-white/5 rounded-md flex justify-between items-center group">
                             <span><i class="fas fa-file-alt w-5"></i> DOCS</span>
-                            <i class="fas fa-download text-xs opacity-0 group-hover:opacity-100"></i>
+                            <i
+                                class="fas fa-external-link-alt text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </button>
                     </nav>
 
-                    <div class="mt-8 pt-6 border-t border-cyan-500/20 font-mono">
-                        <div class="text-[10px] text-cyan-600 mb-3 tracking-widest">COMM_LINKS</div>
-                        <a href="mailto:rajesh.c@abi-health.com" class="flex items-center gap-2 text-xs text-gray-400 hover:text-cyan-300 mb-3 transition"><i class="fas fa-envelope"></i>Email Me</a>
-                        <a href="https://www.linkedin.com/in/rajesh-chowdhury-software-developer/" target="_blank" class="flex items-center gap-2 text-xs text-gray-400 hover:text-cyan-300 transition"><i class="fab fa-linkedin"></i>LinkedIn</a>
-                    </div>
                 </div>
 
                 <!-- MAIN CONTENT AREA -->
-                <div class="flex-1 p-6 md:p-10 overflow-y-auto" id="tab-content">
-                    <div id="content-about" class="animate-fade-in">
-                        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">Software<span class="text-cyan-400">.Engineer</span></h1>
-                        <p class="text-gray-400 font-mono text-sm mb-8 border-l-2 border-cyan-500 pl-4">Building scalable AI systems and robust backends for the modern web.</p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="p-5 border border-cyan-500/20 bg-cyan-900/10 glitch-hover cursor-crosshair transition-all">
-                                <i class="fas fa-brain text-cyan-400 text-2xl mb-3"></i>
-                                <h3 class="font-bold text-white font-mono text-sm mb-1">AI & GenAI Systems</h3>
-                                <p class="text-xs text-gray-400 leading-relaxed">Specialized in RAG Pipelines, Custom LLMs, and Vector Stores (Supabase, Postgres Vector).</p>
+                <div class="flex-1 p-6 md:p-12 overflow-y-auto" id="tab-content">
+                    <div id="content-about" class="fade-in">
+                        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-3 tracking-tight">Software<span
+                                class="text-cyan-400">.Engineer</span></h1>
+                        <p class="text-gray-400 font-mono text-sm mb-10 border-l-4 border-cyan-500 pl-5 py-1">Building
+                            scalable AI systems and robust backends for the modern web.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div
+                                class="p-6 border border-cyan-500/20 bg-cyan-950/20 rounded-xl cursor-crosshair transition-all backdrop-blur-sm">
+                                <i class="fas fa-brain text-cyan-400 text-3xl mb-4"></i>
+                                <h3 class="font-bold text-white font-mono text-sm mb-2 uppercase tracking-wide">AI &
+                                    GenAI Systems</h3>
+                                <p class="text-xs text-gray-400 leading-relaxed">Specialized in RAG Pipelines, Custom
+                                    LLMs, and Vector Stores (Supabase, Postgres Vector).</p>
                             </div>
-                            <div class="p-5 border border-green-500/20 bg-green-900/10 glitch-hover cursor-crosshair transition-all">
-                                <i class="fas fa-layer-group text-green-400 text-2xl mb-3"></i>
-                                <h3 class="font-bold text-white font-mono text-sm mb-1">Full Stack Development</h3>
-                                <p class="text-xs text-gray-400 leading-relaxed">Expert architecture using ASP.NET MVC, C#, Python FastAPI, and Modern Auth flows.</p>
+                            <div
+                                class="p-6 border border-green-500/20 bg-green-950/20 rounded-xl cursor-crosshair transition-all backdrop-blur-sm">
+                                <i class="fas fa-layer-group text-green-400 text-3xl mb-4"></i>
+                                <h3 class="font-bold text-white font-mono text-sm mb-2 uppercase tracking-wide">Full
+                                    Stack Development</h3>
+                                <p class="text-xs text-gray-400 leading-relaxed">Expert architecture using ASP.NET MVC,
+                                    C#, Python FastAPI, and Modern Auth flows.</p>
                             </div>
                         </div>
 
-                        <div class="mt-8">
-                            <h3 class="font-mono text-cyan-500 text-xs tracking-widest mb-4">/// RECENT_PROCESSES</h3>
-                            <div class="space-y-3">
-                                <div class="p-4 bg-black/40 border border-white/5 flex items-start gap-4 hover:border-cyan-500/50 transition">
-                                    <i class="fas fa-shield-alt text-cyan-400 mt-1"></i>
+                        <div class="mt-12">
+                            <h3 class="font-mono text-cyan-500/60 text-[10px] tracking-[0.4em] mb-6 uppercase">///
+                                recent_processes</h3>
+                            <div class="space-y-4">
+                                <div
+                                    class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-cyan-500/40 hover:bg-white/10 transition-all group">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
                                     <div>
                                         <h4 class="font-bold text-white text-sm">Enterprise Security Integration</h4>
-                                        <p class="text-xs text-gray-400 mt-1">Implemented Row-Level Security (RLS) in PostgreSQL for sensitive healthcare data at ABI Health.</p>
+                                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Implemented Row-Level
+                                            Security (RLS) in PostgreSQL for sensitive healthcare data at ABI Health.
+                                        </p>
                                     </div>
                                 </div>
-                                <div class="p-4 bg-black/40 border border-white/5 flex items-start gap-4 hover:border-green-500/50 transition">
-                                    <i class="fas fa-mobile-alt text-green-400 mt-1"></i>
+                                <div
+                                    class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-green-500/40 hover:bg-white/10 transition-all group">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-mobile-alt"></i>
+                                    </div>
                                     <div>
                                         <h4 class="font-bold text-white text-sm">Cross-Platform Deployment</h4>
-                                        <p class="text-xs text-gray-400 mt-1">Delivered robust mobile solutions utilizing Flutter framework and Android Studio.</p>
+                                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Delivered robust mobile
+                                            solutions utilizing Flutter framework and Android Studio.</p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-cyan-500/40 hover:bg-white/10 transition-all group">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-microchip"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white text-sm">Neural Vector Search Optimization</h4>
+                                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Engineered semantic search capabilities using Postgres Vector and RAG architectures.</p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-green-500/40 hover:bg-white/10 transition-all group">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-code-branch"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white text-sm">Automated CI/CD Orchestration</h4>
+                                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Streamlined deployment workflows using Docker and custom automation scripts.</p>
                                     </div>
                                 </div>
                             </div>
@@ -358,28 +637,33 @@
         </div>
 
         <!-- TERMINAL WINDOW -->
-        <div id="win-terminal" class="window-frame w-[90%] md:w-[700px] h-[450px] bg-black/90" style="top: 50%; left: 50%; z-index: 11;">
-            <div class="title-bar bg-zinc-950" onmousedown="dragStart(event, 'win-terminal')">
+        <div id="win-terminal" class="window-frame w-[92%] md:w-[800px] h-[min(520px,70vh)] bg-black/95"
+            style="top: 50%; left: 50%;">
+            <div class="title-bar bg-zinc-950" onmousedown="dragStart(event, 'win-terminal')"
+                ontouchstart="dragStart(event, 'win-terminal')">
                 <div class="traffic-lights">
                     <div class="light close-btn" onclick="closeWindow('win-terminal')"></div>
-                    <div class="light min-btn"></div>
-                    <div class="light max-btn"></div>
+                    <div class="light min-btn" onclick="closeWindow('win-terminal')"></div>
+                    <div class="light max-btn" onclick="toggleMaximize('win-terminal')"></div>
                 </div>
-                <div class="text-xs font-mono text-gray-500">root@rajesh-os:~</div>
+                <div class="text-[10px] font-mono text-gray-600 uppercase tracking-widest">terminal.sh — 80×24</div>
                 <div class="w-10"></div>
             </div>
-            
-            <div class="window-content p-4 font-mono text-sm cursor-text" onclick="document.getElementById('cli-input').focus()">
+
+            <div class="window-content p-5 font-mono text-sm cursor-text"
+                onclick="document.getElementById('cli-input').focus()">
                 <div id="terminal-output" class="text-green-500 space-y-1 text-xs md:text-sm">
                     <div class="text-gray-500">RajeshOS Kernel [Version 9.0.2]</div>
-                    <div class="text-gray-500">Unauthorized access is strictly monitored.</div>
+                    <div class="text-gray-500">Initializing secure session...</div>
                     <br>
                     <div>Type <span class="text-cyan-400">'help'</span> to view available system commands.</div>
                     <br>
                 </div>
                 <div class="flex items-center mt-2">
                     <span class="text-green-500 mr-2 font-bold">root@os:~$</span>
-                    <input type="text" id="cli-input" class="bg-transparent border-none outline-none flex-1 text-green-400 caret-green-500 font-mono text-xs md:text-sm" autocomplete="off" spellcheck="false">
+                    <input type="text" id="cli-input"
+                        class="bg-transparent border-none outline-none flex-1 text-green-400 caret-cyan-500 font-mono text-xs md:text-sm"
+                        autocomplete="off" spellcheck="false">
                 </div>
             </div>
         </div>
@@ -387,7 +671,8 @@
         <!-- DOCK -->
         <div class="dock-container">
             <div class="dock">
-                <div id="dock-profile" class="dock-icon running" onclick="openWindow('win-profile')" title="System Profile">
+                <div id="dock-profile" class="dock-icon running" onclick="openWindow('win-profile')"
+                    title="System Profile">
                     <i class="fas fa-user-astronaut"></i>
                 </div>
                 <div id="dock-terminal" class="dock-icon" onclick="toggleTerminal()" title="Root Terminal">
@@ -395,9 +680,13 @@
                 </div>
                 <a href="https://github.com/rajeshc-git" target="_blank" class="dock-icon" title="GitHub Repository">
                     <i class="fab fa-github"></i>
-                
-                <a href="https://www.linkedin.com/in/rajesh-chowdhury-software-developer/" target="_blank" class="dock-icon" title="LinkedIn Network">
-                    <i class="fab fa-linkedin-in text-[#0077b5]"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/rajesh-chowdhury-software-developer/" target="_blank"
+                    class="dock-icon" title="LinkedIn Network">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+                <a href="mailto:rajesh.c@abi-health.com" class="dock-icon" title="Send Transmission">
+                    <i class="fas fa-paper-plane"></i>
                 </a>
             </div>
         </div>
@@ -408,11 +697,12 @@
         function typeBootScreen() {
             const bootLines = document.querySelectorAll('.boot-line');
             let totalDelay = 0;
-            
+
             bootLines.forEach((line) => {
                 const text = line.getAttribute('data-text');
-                line.textContent = ''; 
-                
+                if (!text) return;
+                line.textContent = '';
+
                 setTimeout(() => {
                     let charIndex = 0;
                     line.classList.add('typing');
@@ -423,92 +713,156 @@
                         } else {
                             clearInterval(typeInterval);
                         }
-                    }, 5); // Ultra fast typing
+                    }, 5);
                 }, totalDelay);
-                
-                totalDelay += (text.length * 5) + 150; 
+
+                totalDelay += (text.length * 5) + 120;
             });
-            
+
             setTimeout(() => {
                 const bootScreen = document.getElementById('boot-screen');
-                bootScreen.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                bootScreen.style.transition = 'opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
                 bootScreen.style.opacity = '0';
-                bootScreen.style.transform = 'scale(1.05)';
-                setTimeout(() => bootScreen.remove(), 500);
-            }, totalDelay + 600);
+                bootScreen.style.transform = 'scale(1.1) rotate(0.5deg)';
+                setTimeout(() => bootScreen.remove(), 600);
+            }, totalDelay + 400);
         }
 
         window.addEventListener('load', typeBootScreen);
 
         // TAB DATA
         const contentData = {
-            'about': document.getElementById('content-about').innerHTML,
+            'about': `
+                <div class="fade-in">
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-3 tracking-tight">Software<span class="text-cyan-400">.Engineer</span></h1>
+                    <p class="text-gray-400 font-mono text-sm mb-10 border-l-4 border-cyan-500 pl-5 py-1">Building scalable AI systems and robust backends for the modern web.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="p-6 border border-cyan-500/20 bg-cyan-950/20 rounded-xl transition-all backdrop-blur-sm">
+                            <i class="fas fa-brain text-cyan-400 text-3xl mb-4"></i>
+                            <h3 class="font-bold text-white font-mono text-sm mb-2 uppercase tracking-wide">AI & GenAI Systems</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">Specialized in RAG Pipelines, Custom LLMs, and Vector Stores (Supabase, Postgres Vector).</p>
+                        </div>
+                        <div class="p-6 border border-green-500/20 bg-green-950/20 rounded-xl transition-all backdrop-blur-sm">
+                            <i class="fas fa-layer-group text-green-400 text-3xl mb-4"></i>
+                            <h3 class="font-bold text-white font-mono text-sm mb-2 uppercase tracking-wide">Full Stack Development</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">Expert architecture using ASP.NET MVC, C#, Python FastAPI, and Modern Auth flows.</p>
+                        </div>
+                    </div>
+                    <div class="mt-12">
+                        <h3 class="font-mono text-cyan-500/60 text-[10px] tracking-[0.4em] mb-6 uppercase">/// recent_processes</h3>
+                        <div class="space-y-4">
+                            <div class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-cyan-500/40 hover:bg-white/10 transition-all group">
+                                <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform"><i class="fas fa-shield-alt"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Enterprise Security Integration</h4>
+                                    <p class="text-xs text-gray-400 mt-1 leading-relaxed">Implemented Row-Level Security (RLS) in PostgreSQL for healthcare data.</p>
+                                </div>
+                            </div>
+                            <div class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-green-500/40 hover:bg-white/10 transition-all group">
+                                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform"><i class="fas fa-mobile-alt"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Cross-Platform Deployment</h4>
+                                    <p class="text-xs text-gray-400 mt-1 leading-relaxed">Delivered robust mobile solutions utilizing Flutter and Android Studio.</p>
+                                </div>
+                            </div>
+                            <div class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-cyan-500/40 hover:bg-white/10 transition-all group">
+                                <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform"><i class="fas fa-microchip"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Neural Vector Search Optimization</h4>
+                                    <p class="text-xs text-gray-400 mt-1 leading-relaxed">Engineered semantic search capabilities using Postgres Vector and RAG.</p>
+                                </div>
+                            </div>
+                            <div class="p-5 bg-white/5 border border-white/10 rounded-xl flex items-start gap-5 hover:border-green-500/40 hover:bg-white/10 transition-all group">
+                                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform"><i class="fas fa-code-branch"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Automated CI/CD Orchestration</h4>
+                                    <p class="text-xs text-gray-400 mt-1 leading-relaxed">Streamlined deployment workflows using Docker and automation scripts.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
             'experience': `
-                <h2 class="text-2xl font-bold text-white mb-6 tracking-tight">Work<span class="text-cyan-400">.Log</span></h2>
-                <div class="space-y-6 relative border-l border-cyan-900 ml-2 pl-6 font-mono">
-                    <div class="relative">
-                        <div class="absolute -left-[29px] top-1 w-3 h-3 bg-cyan-400 shadow-[0_0_10px_#00f0ff]"></div>
-                        <h3 class="text-base font-bold text-white">Senior Software Engineer</h3>
-                        <p class="text-cyan-500 text-xs mt-1">ABI Health // Dec 2025 - Present</p>
-                        <ul class="mt-3 text-xs text-gray-400 list-none space-y-2">
-                            <li>> Leading AI/ML innovation with Python, Node.js, and FastAPI.</li>
-                            <li>> Architecting custom RAG pipelines & LLM solutions.</li>
-                            <li>> Mobile app delivery via Flutter & Android Studio.</li>
-                        </ul>
-                    </div>
-                    <div class="relative">
-                        <div class="absolute -left-[29px] top-1 w-3 h-3 bg-gray-600"></div>
-                        <h3 class="text-base font-bold text-gray-300">System Analyst</h3>
-                        <p class="text-gray-500 text-xs mt-1">ABI Health // Sep 2023 - Nov 2025</p>
-                        <ul class="mt-3 text-xs text-gray-400 list-none space-y-2">
-                            <li>> Full Stack Dev: ASP.NET MVC (C#), REST APIs.</li>
-                            <li>> Implemented Row-Level Security (RLS) in PostgreSQL.</li>
-                        </ul>
-                    </div>
-                    <div class="relative">
-                        <div class="absolute -left-[29px] top-1 w-3 h-3 bg-gray-600"></div>
-                        <h3 class="text-base font-bold text-gray-300">Software Engineer</h3>
-                        <p class="text-gray-500 text-xs mt-1">DIT, Tripura // Jan 2022 - Aug 2023</p>
-                        <p class="mt-3 text-xs text-gray-400">> Built scalable Govt Enterprise Web Apps using ASP.NET MVC and Android Native Apps.</p>
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">Work<span class="text-cyan-400">.Log</span></h2>
+                    <div class="space-y-6 relative border-l-2 border-cyan-900/30 ml-3 pl-8 font-mono">
+                        <div class="exp-item selected p-5 rounded-xl cursor-pointer" onclick="selectExp(this)">
+                            <div class="absolute -left-[42px] top-7 w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center exp-dot transition-all duration-500">
+                                <div class="w-2 h-2 bg-black rounded-full inner-dot"></div>
+                            </div>
+                            <h3 class="text-lg font-bold text-white exp-title transition-colors">Senior Software Engineer</h3>
+                            <p class="text-gray-500 text-xs mt-1 font-bold exp-company transition-colors">ABI Health // Dec 2025 - Present</p>
+                            <ul class="mt-4 text-xs text-gray-400 list-none space-y-3">
+                                <li class="flex gap-2"><span class="text-gray-600 exp-arrow transition-colors">❯</span> Leading AI/ML innovation with Python, Node.js, and FastAPI.</li>
+                                <li class="flex gap-2"><span class="text-gray-600 exp-arrow transition-colors">❯</span> Architecting custom RAG pipelines & LLM solutions.</li>
+                                <li class="flex gap-2"><span class="text-gray-600 exp-arrow transition-colors">❯</span> Mobile app delivery via Flutter & Android Studio.</li>
+                            </ul>
+                        </div>
+                        <div class="exp-item p-5 rounded-xl cursor-pointer" onclick="selectExp(this)">
+                            <div class="absolute -left-[42px] top-7 w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center exp-dot transition-all duration-500">
+                                <div class="w-2 h-2 bg-black rounded-full inner-dot"></div>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-400 exp-title transition-colors">System Analyst</h3>
+                            <p class="text-gray-500 text-xs mt-1 font-bold exp-company transition-colors">ABI Health // Sep 2023 - Nov 2025</p>
+                            <ul class="mt-4 text-xs text-gray-400 list-none space-y-3">
+                                <li class="flex gap-2"><span class="text-gray-600 exp-arrow transition-colors">❯</span> Full Stack Dev: ASP.NET MVC (C#), REST APIs.</li>
+                                <li class="flex gap-2"><span class="text-gray-600 exp-arrow transition-colors">❯</span> Implemented Row-Level Security (RLS) in PostgreSQL.</li>
+                            </ul>
+                        </div>
+                        <div class="exp-item p-5 rounded-xl cursor-pointer" onclick="selectExp(this)">
+                            <div class="absolute -left-[42px] top-7 w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center exp-dot transition-all duration-500">
+                                <div class="w-2 h-2 bg-black rounded-full inner-dot"></div>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-400 exp-title transition-colors">Software Engineer</h3>
+                            <p class="text-gray-600 text-xs mt-1 font-bold exp-company transition-colors">DIT, Tripura // Jan 2022 - Aug 2023</p>
+                            <p class="mt-4 text-xs text-gray-500 leading-relaxed"><span class="text-gray-600 exp-arrow transition-colors">❯</span> Built scalable Govt Enterprise Web Apps using ASP.NET MVC and Android Native Apps.</p>
+                        </div>
                     </div>
                 </div>
             `,
             'skills': `
-                <h2 class="text-2xl font-bold text-white mb-6 tracking-tight">Tech<span class="text-green-400">.Stack</span></h2>
-                <div class="grid grid-cols-1 gap-8 font-mono">
-                    <div>
-                        <h3 class="text-xs text-cyan-500 tracking-widest mb-3">/// LANGUAGES_AND_FRAMEWORKS</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-cyan-400 transition">C#</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-cyan-400 transition">Python</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-cyan-400 transition">ASP.NET MVC</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-cyan-400 transition">FastAPI</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-cyan-400 transition">Flutter</span>
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">Tech<span class="text-green-400">.Stack</span></h2>
+                    <div class="grid grid-cols-1 gap-10 font-mono">
+                        <div>
+                            <h3 class="text-[10px] text-cyan-500 tracking-[0.3em] mb-5 uppercase">/// languages_and_frameworks</h3>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">C#</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">Python</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">ASP.NET MVC</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">FastAPI</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">Flutter</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">JavaScript</span>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <h3 class="text-xs text-green-500 tracking-widest mb-3">/// AI_AND_INFRASTRUCTURE</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-green-400 transition">RAG Pipelines</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-green-400 transition">Custom LLMs</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-green-400 transition">Supabase</span>
-                            <span class="px-3 py-1 bg-black border border-gray-700 text-gray-300 text-xs hover:border-green-400 transition">Postgres Vector</span>
+                        <div>
+                            <h3 class="text-[10px] text-green-500 tracking-[0.3em] mb-5 uppercase">/// ai_and_infrastructure</h3>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">RAG Pipelines</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">Custom LLMs</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">Supabase</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">Postgres Vector</span>
+                                <span class="skill-tag px-4 py-2 bg-white/5 border border-white/10 rounded text-gray-300 text-xs" onclick="this.classList.toggle('active')">Docker</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             `,
             'resume': `
-                <div class="flex items-center justify-between gap-4 mb-4">
-                    <h2 class="text-2xl font-bold text-white tracking-tight">Data<span class="text-cyan-400">.PDF</span></h2>
-                    <div class="flex items-center gap-4 font-mono text-xs">
-                        <a href="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh-CV-latest.pdf" target="_blank" class="text-cyan-400 hover:text-white transition">[ OPEN_EXTERNAL ]</a>
+                <div class="fade-in flex flex-col h-full">
+                    <div class="flex items-center justify-between gap-4 mb-6">
+                        <h2 class="text-3xl font-bold text-white tracking-tight">Data<span class="text-cyan-400">.PDF</span></h2>
+                        <div class="flex items-center gap-4 font-mono text-[10px]">
+                            <a href="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh-CV-latest.pdf" target="_blank" class="text-cyan-400 hover:text-white transition uppercase border border-cyan-500/30 px-3 py-1 rounded">[ open_external ]</a>
+                        </div>
                     </div>
-                </div>
-                <div class="cyber-border p-[1px]">
-                    <div class="rounded bg-black overflow-hidden relative z-10" style="height: 480px;">
-                        <object data="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" type="application/pdf" class="w-full h-full">
-                            <iframe src="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" class="w-full h-full"></iframe>
-                        </object>
+                    <div class="cyber-border flex-1 min-h-[400px]">
+                        <div class="rounded-lg bg-black/80 overflow-hidden relative z-10 w-full h-full">
+                            <object data="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" type="application/pdf" class="w-full h-full">
+                                <iframe src="https://cdn.jsdelivr.net/gh/rajeshc-git/resume@main/rajesh%20resume%202.pdf" class="w-full h-full border-none"></iframe>
+                            </object>
+                        </div>
                     </div>
                 </div>
             `
@@ -520,32 +874,59 @@
         let zIndexCounter = 100;
 
         function dragStart(e, id) {
-            if(e.target.closest('.traffic-lights') || e.target.closest('button')) return;
-            draggedWindow = document.getElementById(id);
+            const win = document.getElementById(id);
+            if (win.classList.contains('maximized')) return;
+
+            // Allow dragging only from title bar
+            if (!e.target.closest('.title-bar') || e.target.closest('.traffic-lights') || e.target.closest('button')) return;
+
+            draggedWindow = win;
             bringToFront(draggedWindow);
+
+            // Disable transitions during dragging for performance
+            draggedWindow.style.transition = 'none';
+
             const rect = draggedWindow.getBoundingClientRect();
-            startX = e.clientX;
-            startY = e.clientY;
-            initialLeft = rect.left + (rect.width/2); 
-            initialTop = rect.top + (rect.height/2);
+            const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+            const clientY = (e.clientY !== undefined) ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+
+            startX = clientX;
+            startY = clientY;
+
+            // Current position adjusted for center transform
+            initialLeft = rect.left + (rect.width / 2);
+            initialTop = rect.top + (rect.height / 2);
 
             document.addEventListener('mousemove', dragMove);
             document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchmove', dragMove, { passive: false });
+            document.addEventListener('touchend', dragEnd);
         }
 
         function dragMove(e) {
             if (!draggedWindow) return;
-            e.preventDefault();
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            if (e.cancelable) e.preventDefault();
+
+            const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+            const clientY = (e.clientY !== undefined) ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
+
             draggedWindow.style.left = `${initialLeft + dx}px`;
             draggedWindow.style.top = `${initialTop + dy}px`;
         }
 
         function dragEnd() {
+            if (draggedWindow) {
+                // Re-enable transitions after dragging
+                draggedWindow.style.transition = '';
+            }
             draggedWindow = null;
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('mouseup', dragEnd);
+            document.removeEventListener('touchmove', dragMove);
+            document.removeEventListener('touchend', dragEnd);
         }
 
         function bringToFront(el) {
@@ -578,30 +959,60 @@
             else openWindow('win-terminal');
         }
 
+        function toggleMaximize(id) {
+            const win = document.getElementById(id);
+            win.classList.toggle('maximized');
+            if (win.classList.contains('maximized')) {
+                win.style.left = '50vw';
+                win.style.top = 'calc(50vh - 40px)';
+            }
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('hidden');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            sidebar.classList.toggle('sidebar-open');
+            backdrop.classList.toggle('active');
         }
 
         function switchTab(tabName) {
             const contentDiv = document.getElementById('tab-content');
-            
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.add('hidden');
-            }
-            
-            contentDiv.style.opacity = '0';
-            setTimeout(() => {
-                contentDiv.innerHTML = contentData[tabName] || '<p>404_NOT_FOUND</p>';
-                contentDiv.style.opacity = '1';
-                contentDiv.style.transition = 'opacity 0.2s';
-            }, 150);
 
-            const buttons = document.querySelectorAll('nav button');
-            buttons.forEach(btn => {
-                btn.className = "w-full text-left px-4 py-2 border border-transparent text-gray-400 transition hover:text-cyan-300 hover:border-cyan-500/30";
-            });
-            event.currentTarget.className = "w-full text-left px-4 py-2 border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 transition hover:bg-cyan-500/20";
+            // Handle sidebar on mobile
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('sidebar-open')) {
+                    toggleSidebar();
+                }
+            }
+
+            contentDiv.style.opacity = '0';
+            contentDiv.style.transform = 'translateY(10px)';
+            contentDiv.style.transition = 'opacity 0.2s, transform 0.2s';
+
+            setTimeout(() => {
+                contentDiv.innerHTML = contentData[tabName] || '<p class="font-mono text-red-500">404_NOT_FOUND</p>';
+                contentDiv.style.opacity = '1';
+                contentDiv.style.transform = 'translateY(0)';
+
+                // Update active button state
+                const buttons = document.querySelectorAll('nav button');
+                buttons.forEach(btn => {
+                    btn.classList.remove('border-cyan-500/30', 'bg-cyan-500/10', 'text-cyan-300');
+                    btn.classList.add('border-transparent', 'text-gray-400');
+                });
+
+                const activeBtn = document.getElementById('btn-' + tabName);
+                if (activeBtn) {
+                    activeBtn.classList.remove('border-transparent', 'text-gray-400');
+                    activeBtn.classList.add('border-cyan-500/30', 'bg-cyan-500/10', 'text-cyan-300');
+                }
+            }, 200);
+        }
+
+        function selectExp(el) {
+            document.querySelectorAll('.exp-item').forEach(item => item.classList.remove('selected'));
+            el.classList.add('selected');
         }
 
         // TERMINAL LOGIC
@@ -609,18 +1020,19 @@
         const cliOutput = document.getElementById('terminal-output');
 
         const fileSystem = {
-            'ls': 'profile.exe  sys_logs/  skills.json  contact.md',
-            'whoami': 'root (Access Granted)',
+            'ls': 'profile.exe  sys_logs/  skills.json  contact.md  resume.pdf',
+            'whoami': 'guest_user (Authenticated)',
             'date': new Date().toString(),
-            'cat contact.md': 'EMAIL: rajesh.c@abi-health.com\nGITHUB: github.com/rajeshc-git',
-            'help': 'Commands: ls, whoami, date, clear, exit, cat <file>'
+            'cat contact.md': 'EMAIL: rajesh.c@abi-health.com\nLINKEDIN: linkedin.com/in/rajesh-chowdhury-software-developer/\nGITHUB: github.com/rajeshc-git',
+            'help': 'Available commands: ls, whoami, date, clear, cat, help, exit',
+            'neofetch': 'RAJESH_OS v9.0.2\nUptime: 10 mins\nShell: bash\nResolution: 1920x1080\nCPU: Intel AI Core i9\nMemory: 32GB'
         };
 
         cliInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const cmd = cliInput.value.trim();
-                cliOutput.innerHTML += `<div><span class="text-green-500 font-bold">root@os:~$</span> ${cmd}</div>`;
-                
+                const cmd = cliInput.value.trim().toLowerCase();
+                cliOutput.innerHTML += `<div class="mt-2"><span class="text-cyan-500 font-bold">root@os:~$</span> ${cmd}</div>`;
+
                 let response = '';
                 if (cmd === 'clear') {
                     cliOutput.innerHTML = '';
@@ -629,26 +1041,53 @@
                 } else if (fileSystem[cmd]) {
                     response = fileSystem[cmd];
                 } else if (cmd.startsWith('cat ')) {
-                    response = fileSystem[cmd] || `cat: ${cmd.split(' ')[1]}: Permission denied`;
+                    const file = cmd.split(' ')[1];
+                    response = fileSystem[`cat ${file}`] || `cat: ${file}: No such file or directory`;
                 } else if (cmd !== '') {
-                    response = `bash: ${cmd}: command not found`;
+                    response = `bash: ${cmd}: command not found. Type 'help' for available commands.`;
                 }
 
                 if (response && cmd !== 'clear') {
-                    cliOutput.innerHTML += `<div class="text-gray-400 mb-2 whitespace-pre-wrap">${response}</div>`;
+                    cliOutput.innerHTML += `<div class="text-gray-400 mb-2 whitespace-pre-wrap pl-2 border-l border-white/10 mt-1">${response}</div>`;
                 }
 
                 cliInput.value = '';
                 const container = document.querySelector('#win-terminal .window-content');
-                container.scrollTop = container.scrollHeight;
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
             }
         });
 
         window.onload = () => {
             setTimeout(() => {
                 openWindow('win-profile');
-            }, 2500); // Shorter boot time to match new animation
+            }, 3000);
+        };
+        function openImageModal() {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-img');
+            const profileImg = document.querySelector('#sidebar img');
+            modalImg.src = profileImg.src;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+            }, 10);
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.remove('opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('image-modal');
+            if (event.target == modal) {
+                closeImageModal();
+            }
         };
     </script>
 </body>
+
 </html>
