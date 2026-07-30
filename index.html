@@ -1444,7 +1444,7 @@
         </section>
     </div>
 
-    <footer class="footer"><div class="content"><p>Sketched with care by <strong>Rajesh Choudhury</strong> • The Architect's Notebook • © 2026</p></div></footer>
+    <footer class="footer"><div class="content"><p>Sketched with care by <strong>Rajesh Choudhury</strong> • All Rights Reserved • © 2026</p></div></footer>
 
     <!-- Availability Float -->
     <div class="availability-float" onclick="location.href='mailto:rajesh2021.it@gmail.com'">
@@ -1607,14 +1607,17 @@
         });
 
         // ═══ MOUSE DEPTH PARALLAX FOR HTML LAYERS ═══
-        const depthLayers = document.querySelectorAll('.depth-layer');
+        const depthLayerData = Array.from(document.querySelectorAll('.depth-layer')).map(layer => ({
+            el: layer,
+            depth: parseFloat(layer.dataset.depth) || 0.02
+        }));
         document.addEventListener('mousemove', (e) => {
             const mx = (e.clientX / window.innerWidth - 0.5);
             const my = (e.clientY / window.innerHeight - 0.5);
-            depthLayers.forEach(layer => {
-                const d = parseFloat(layer.dataset.depth) || 0.02;
-                layer.style.transform = `translate(${mx * d * -100}px, ${my * d * -60}px)`;
-            });
+            for (let i = 0; i < depthLayerData.length; i++) {
+                const { el, depth } = depthLayerData[i];
+                el.style.transform = `translate(${mx * depth * -100}px, ${my * depth * -60}px)`;
+            }
         });
     </script>
 
@@ -1634,56 +1637,55 @@
         let zoneToastTimer = null;
 
         // Scroll-based zone detection & minimap player tracking
+        // Cache DOM references outside the scroll handler (avoids getElementById on every scroll tick)
+        const _player = document.getElementById('minimap-player');
+        const _healthFill = document.getElementById('hud-health-fill');
+        const _armorFill = document.getElementById('hud-armor-fill');
+        const _specialFill = document.getElementById('hud-special-fill');
+        const _pBat = document.getElementById('phone-battery');
+        const _psBat = document.getElementById('phone-screen-battery');
+        const _phoneZone = document.getElementById('phone-zone-label');
+        const _minimapPins = document.querySelectorAll('.minimap-pin');
+        const _zoneEls = zones.map(z => ({ ...z, el: document.getElementById(z.id) }));
+
         function updateMapState() {
             const scrollY = window.scrollY;
             const docHeight = document.body.scrollHeight - window.innerHeight;
             const scrollPct = Math.max(0, Math.min(1, scrollY / docHeight));
 
-            // Move player dot on minimap (rounded path layout)
-            const player = document.getElementById('minimap-player');
-            if (player) {
-                // Approximate coordinates on rounded map path (15% top to 87% bottom)
-                const mapTop = 15 + scrollPct * 72;
-                player.style.top = mapTop + '%';
-                player.style.left = '50%';
+            // Move player dot on minimap
+            if (_player) {
+                _player.style.top = (15 + scrollPct * 72) + '%';
             }
 
             // Update HUD progress fills
-            const healthFill = document.getElementById('hud-health-fill');
-            const armorFill = document.getElementById('hud-armor-fill');
-            const specialFill = document.getElementById('hud-special-fill');
-
-            if (healthFill) healthFill.style.width = (scrollPct * 100) + '%';
-            if (armorFill) {
-                // Armor fills as you scroll through work experience
+            if (_healthFill) _healthFill.style.width = (scrollPct * 100) + '%';
+            if (_armorFill) {
                 const workPct = Math.min(1, Math.max(0, (scrollY - 1500) / 1500));
-                armorFill.style.width = (workPct * 100) + '%';
+                _armorFill.style.width = (workPct * 100) + '%';
             }
-            if (specialFill) {
-                // Special ability charges dynamically
+            if (_specialFill) {
                 const specVal = Math.min(100, Math.max(0, 30 + Math.sin(Date.now() / 800) * 10 + scrollPct * 60));
-                specialFill.style.width = specVal + '%';
+                _specialFill.style.width = specVal + '%';
             }
 
             // Detect active zone
             let activeZone = zones[0].id;
-            for (const zone of zones) {
-                const el = document.getElementById(zone.id);
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    if (rect.top <= window.innerHeight * 0.45) {
-                        activeZone = zone.id;
-                    }
+            const threshold = window.innerHeight * 0.45;
+            for (let i = 0; i < _zoneEls.length; i++) {
+                const z = _zoneEls[i];
+                if (z.el && z.el.getBoundingClientRect().top <= threshold) {
+                    activeZone = z.id;
                 }
             }
 
-            // Force last section when scrolled to absolute bottom of page
+            // Force last section when scrolled to absolute bottom
             if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 15) {
                 activeZone = zones[zones.length - 1].id;
             }
 
             // Update minimap pin active highlights
-            document.querySelectorAll('.minimap-pin').forEach(pin => {
+            _minimapPins.forEach(pin => {
                 pin.classList.toggle('active', pin.dataset.zone === activeZone);
             });
 
@@ -1695,16 +1697,13 @@
             }
 
             // Update mobile phone HUD elements
-            const pBat = document.getElementById('phone-battery');
-            const psBat = document.getElementById('phone-screen-battery');
-            const phoneZone = document.getElementById('phone-zone-label');
-            const batVal = Math.round(100 - scrollPct * 80); // Battery drains as you scroll down
-            const scrollVal = Math.round(scrollPct * 100); // Scrolled percentage progress
-            if (pBat) pBat.textContent = `📜 ${scrollVal}%`;
-            if (psBat) psBat.textContent = `🔋 ${batVal}%`;
-            if (phoneZone) {
+            const batVal = Math.round(100 - scrollPct * 80);
+            const scrollVal = Math.round(scrollPct * 100);
+            if (_pBat) _pBat.textContent = `📜 ${scrollVal}%`;
+            if (_psBat) _psBat.textContent = `🔋 ${batVal}%`;
+            if (_phoneZone) {
                 const zoneData = zones.find(z => z.id === activeZone);
-                if (zoneData) phoneZone.textContent = `📍 ${zoneData.name.toUpperCase()}`;
+                if (zoneData) _phoneZone.textContent = `📍 ${zoneData.name.toUpperCase()}`;
             }
         }
 
@@ -1853,22 +1852,30 @@
             cursorDot.style.left = mouseX + 'px';
             cursorDot.style.top = mouseY + 'px';
 
-            // Sketch trail mark on screen
+            // Sketch trail mark on screen (pooled — max 10 reusable marks, no DOM churn)
             const now = Date.now();
-            if (now - lastMark > 70) {
+            if (now - lastMark > 90) {
                 lastMark = now;
-                const mark = document.createElement('div');
-                mark.className = 'pencil-mark';
+                let mark;
+                if (marks.length < 10) {
+                    mark = document.createElement('div');
+                    mark.className = 'pencil-mark';
+                    document.body.appendChild(mark);
+                    marks.push(mark);
+                } else {
+                    mark = marks.shift();
+                    marks.push(mark);
+                }
+                mark.style.transition = 'none';
+                mark.style.opacity = '1';
+                mark.style.transform = 'scale(1)';
                 mark.style.left = mouseX + 'px';
                 mark.style.top = mouseY + 'px';
-                document.body.appendChild(mark);
-                marks.push(mark);
-                setTimeout(() => {
-                    mark.style.transition = 'opacity 1.5s, transform 1.5s';
-                    mark.style.opacity = '0';
-                    mark.style.transform = 'scale(0.3)';
-                    setTimeout(() => mark.remove(), 1500);
-                }, 400);
+                // Force reflow before applying fade transition
+                mark.offsetWidth;
+                mark.style.transition = 'opacity 1.5s, transform 1.5s';
+                mark.style.opacity = '0';
+                mark.style.transform = 'scale(0.3)';
             }
         });
 
