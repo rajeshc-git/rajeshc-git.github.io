@@ -126,6 +126,19 @@
             transform: translate(-50%, -50%);
         }
 
+        /* Disable custom cursor and restore defaults on touch devices and small viewports */
+        @media (max-width: 768px), (pointer: coarse), (hover: none) {
+            html, body, a, button, input, select, textarea, .btn-sketch, .minimap, .polaroid-wrapper, .contact-card, .sim-tab, .top-brand, .fullmap-overlay, .lightbox, .lightbox-close, .fullmap-close, .fullmap-pin {
+                cursor: auto !important;
+            }
+            .cursor-dot, .cursor-ring, .pencil-mark {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+        }
+
         /* ═══ SKETCH CARD ═══ */
         .sketch-card {
             background: var(--paper); border: 2px solid var(--ink); border-radius:3px;
@@ -1845,12 +1858,17 @@
         let lastMark = 0;
 
         document.addEventListener('mousemove', (e) => {
+            // Guard against touch screens / mobile devices
+            if (window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 768) return;
+
             mouseX = e.clientX;
             mouseY = e.clientY;
             
             // Immediate position for center dot (0 latency)
-            cursorDot.style.left = mouseX + 'px';
-            cursorDot.style.top = mouseY + 'px';
+            if (cursorDot) {
+                cursorDot.style.left = mouseX + 'px';
+                cursorDot.style.top = mouseY + 'px';
+            }
 
             // Sketch trail mark on screen (pooled — max 10 reusable marks, no DOM churn)
             const now = Date.now();
@@ -1881,6 +1899,10 @@
 
         // Smooth Lerp loop for custom sketchy cursor ring
         function updateCursorRing() {
+            if (window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 768) {
+                requestAnimationFrame(updateCursorRing);
+                return;
+            }
             ringX += (mouseX - ringX) * 0.16;
             ringY += (mouseY - ringY) * 0.16;
             if (cursorRing) {
